@@ -73,13 +73,23 @@
   
     <article id="post-索引与算法" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
-    <a href="/2021/08/17/%E7%B4%A2%E5%BC%95%E4%B8%8E%E7%AE%97%E6%B3%95/" class="article-date">
-  <time class="dt-published" datetime="2021-08-17T15:01:58.530Z" itemprop="datePublished">2021-08-17</time>
+    <a href="/2021/08/21/%E7%B4%A2%E5%BC%95%E4%B8%8E%E7%AE%97%E6%B3%95/" class="article-date">
+  <time class="dt-published" datetime="2021-08-21T09:54:27.819Z" itemprop="datePublished">2021-08-21</time>
 </a>
     
   </div>
   <div class="article-inner">
     
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2021/08/21/%E7%B4%A2%E5%BC%95%E4%B8%8E%E7%AE%97%E6%B3%95/">并发机制底层</a>
+    </h1>
+  
+
+      </header>
     
     <div class="e-content article-entry" itemprop="articleBody">
       
@@ -163,20 +173,346 @@
 <h3 id="B-树索引-1"><a href="#B-树索引-1" class="headerlink" title="B+树索引"></a>B+树索引</h3><ul>
 <li><p>聚集索引</p>
 <ul>
+<li><p>概念</p>
+<ul>
 <li>按照主键构建的B+树</li>
 <li>叶子节点为行记录数据</li>
 <li>数据页通过双向链表进行连接</li>
+<li>每张表一个聚集索引</li>
+<li>快速的访问范围查询</li>
+</ul>
+</li>
+<li><p>存储</p>
+<ul>
+<li>物理上不连续，逻辑上连续</li>
+<li>页通过双向链表维护，按照主键的顺序排序</li>
+<li>页中记录也是通过双向链表维护</li>
+</ul>
+</li>
 </ul>
 </li>
 <li><p>辅助索引</p>
+<ul>
+<li><p>非聚集索引</p>
+<ul>
+<li><p>叶子节点索引行包含书签</p>
+<ul>
+<li>数据的聚集索引键</li>
+</ul>
 </li>
 </ul>
-<h2 id="全文索引"><a href="#全文索引" class="headerlink" title="全文索引"></a>全文索引</h2><h2 id="哈希索引"><a href="#哈希索引" class="headerlink" title="哈希索引"></a>哈希索引</h2><p>自适应的，不能人为干预</p>
+</li>
+</ul>
+</li>
+<li><p>B+树索引的分裂</p>
+<ul>
+<li><p>PageHeader</p>
+<ul>
+<li>PAGE_LAST_INSERT</li>
+<li>PAGE_DIRECTION</li>
+<li>PAGE_N_DIRECTION</li>
+</ul>
+</li>
+<li><p>随机插入</p>
+<ul>
+<li>取页的中间记录作为分裂点的记录</li>
+</ul>
+</li>
+<li><p>往同一方向插入</p>
+<ul>
+<li><p>当前已经定位到的之后还有3个</p>
+<ul>
+<li>分裂点为当前定位后的第三条记录</li>
+</ul>
+</li>
+<li><p>其他</p>
+<ul>
+<li>待插入记录就是分裂点</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>B+树索引的管理</p>
+<ul>
+<li><p>alter table add /drop index/key</p>
+</li>
+<li><p>create/drop index</p>
+</li>
+<li><p>Cardinality</p>
+<ul>
+<li><p>优化器根据值判断是否使用当前索引</p>
+</li>
+<li><p>大概的值</p>
+</li>
+<li><p>不是实时更新的</p>
+</li>
+<li><p>更新策略</p>
+<ul>
+<li>表中1/16的数据已经发生过变化</li>
+<li>stat_modified_counter&gt;2000000000</li>
+</ul>
+</li>
+<li><p>更新方法</p>
+<ul>
+<li>取B+树索引中叶子节点的数量</li>
+<li>随机取得8个叶子节点，统计不同记录数</li>
+<li>根据采样得出预估值(P1+P2+…+P8)/8 *A</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>FIC-FAST INDEX CREATION</p>
+<ul>
+<li><p>辅助索引</p>
+</li>
+<li><p>加S锁</p>
+<ul>
+<li>当前可读</li>
+<li>写操作不可用</li>
+</ul>
+</li>
+<li><p>阻塞DML</p>
+</li>
+</ul>
+</li>
+<li><p>OSC-ONLINE SCHEMA CHANGE</p>
+<ul>
+<li><p>PHP脚本</p>
+</li>
+<li><p>修改的表要有主键</p>
+</li>
+<li><p>不能有外键和触发器</p>
+</li>
+<li><p>允许sql_bin_log=0</p>
+<ul>
+<li>不同不slave</li>
+</ul>
+</li>
+<li><p>可以DML</p>
+</li>
+</ul>
+</li>
+<li><p>Online DDL</p>
+<ul>
+<li><p>辅助索引的创建与删除</p>
+<ul>
+<li>允许DML</li>
+</ul>
+</li>
+<li><p>改变自增长值</p>
+</li>
+<li><p>添加或删除外键约束</p>
+</li>
+<li><p>列的重命名</p>
+</li>
+<li><p>新ALTER TABLE</p>
+<ul>
+<li><p>ALGORITHM</p>
+<ul>
+<li><p>INPLACE</p>
+</li>
+<li><p>DEFAULT</p>
+<ul>
+<li>old_alter_table</li>
+</ul>
+</li>
+<li><p>COPY</p>
+<ul>
+<li>读写等待，创建临时表</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>LOCK</p>
+<ul>
+<li><p>NONE</p>
+<ul>
+<li>不加锁</li>
+</ul>
+</li>
+<li><p>SHARE</p>
+<ul>
+<li><p>加S锁</p>
+<ul>
+<li>可并发读，对写等待</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>EXCLUSIVE</p>
+<ul>
+<li><p>加X锁</p>
+<ul>
+<li>读写都等待</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>DEFAULT</p>
+<ul>
+<li>先NONE,再SHARE,后EXCLUSIVE</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>原理</p>
+<ul>
+<li><p>执行操作同时，对DML操作日志写入缓存</p>
+</li>
+<li><p>innodb_online_alter_log_max_size</p>
+<ul>
+<li>控制缓存大小</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>B+树索引的使用</p>
+<ul>
+<li><p>联合索引</p>
+<ul>
+<li>键值都是排序的</li>
+<li>对第二个键值进行了排序</li>
+</ul>
+</li>
+<li><p>覆盖索引</p>
+</li>
+<li><p>优化器选择</p>
+</li>
+<li><p>force index</p>
+</li>
+<li><p>use index</p>
+</li>
+<li><p>MRR-Multi-Range Read</p>
+<ul>
+<li><p>好处</p>
+<ul>
+<li><p>使数据访问变的较为顺序</p>
+<ul>
+<li>在查询辅助索引时 ，首先根据得到的查询结果，按照主键进行排序，并按照主键排序的顺序进行书签查找</li>
+</ul>
+</li>
+<li><p>减少缓冲池中页被替换的次数</p>
+</li>
+<li><p>批量处理对键值的查询操作</p>
+</li>
+</ul>
+</li>
+<li><p>工作方式</p>
+<ul>
+<li>将查询到的辅助索引键值存放于一个缓存中，这时缓存中的数据是根据辅助索引键值排序的</li>
+<li>将缓存中的键值根据RowId进行排序</li>
+<li>根据RowId的排序顺序来访问实际数据文件</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>ICP-Index Condition Pushdown</p>
+<ul>
+<li><p>取出索引的同时判断是否可以进行where条件的过滤</p>
+<ul>
+<li>将where的部分过滤操作放在了存储引擎层</li>
+<li>减少上层sql对记录的索取</li>
+</ul>
+</li>
+<li><p>支持range，ref，eq_ref，ref_or_null</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="全文索引"><a href="#全文索引" class="headerlink" title="全文索引"></a>全文索引</h2><h3 id="倒排索引"><a href="#倒排索引" class="headerlink" title="倒排索引"></a>倒排索引</h3><ul>
+<li><p>inverted file index</p>
+<ul>
+<li>单词，单词所在文档的ID</li>
+</ul>
+</li>
+<li><p>full invertedindex</p>
+<ul>
+<li>单词，（单词所在文档的ID，在具体文档中的位置）</li>
+</ul>
+</li>
+</ul>
+<h3 id="InnoDB全文检索"><a href="#InnoDB全文检索" class="headerlink" title="InnoDB全文检索"></a>InnoDB全文检索</h3><ul>
+<li><p>Auxiliary Table</p>
+<ul>
+<li>一共有6个</li>
+</ul>
+</li>
+<li><p>FTS Index Cache</p>
+<ul>
+<li>红黑树结构</li>
+</ul>
+</li>
+</ul>
+<h3 id="全文检索"><a href="#全文检索" class="headerlink" title="全文检索"></a>全文检索</h3><ul>
+<li><p>Match(col1,col2,..)Against(expr)</p>
+<ul>
+<li><p>Natural Language</p>
+<ul>
+<li><p>相关性计算</p>
+<ul>
+<li>word 是否在文档中出现</li>
+<li>word在文档中出现的次数</li>
+<li>word在索引列中的数量</li>
+<li>多少个文档包含该word</li>
+</ul>
+</li>
+<li><p>因素</p>
+<ul>
+<li>word是否在stopwrd</li>
+<li>word长度innodb_ft_min_token_size,innodb_ft_max_token_size</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Boolean</p>
+<ul>
+<li><p>操作符</p>
+<ul>
+<li>+表示word必须存在</li>
+<li>-表示word必须排除</li>
+<li>(no operator)表示word可选，如果出现，相关性会更高</li>
+<li>@distance 多个单词的距离</li>
+<li><blockquote>
+<p>出现该单词增加相关性</p>
+</blockquote>
+</li>
+<li>&lt;出现该单词，降低相关性</li>
+<li>~ 允许出现，出现时相关性为负</li>
+<li>*表示单词开头的词</li>
+<li>‘’表示短语</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Query Expansion</p>
+<ul>
+<li><p>过程</p>
+<ul>
+<li>根据搜索的单词进行全文索引查询</li>
+<li>根据第一阶段产生的分词再进行一次全文检索</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="哈希索引"><a href="#哈希索引" class="headerlink" title="哈希索引"></a>哈希索引</h2><p>自适应的，不能人为干预</p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2021/08/17/%E7%B4%A2%E5%BC%95%E4%B8%8E%E7%AE%97%E6%B3%95/" data-id="cksg75lc300009m6ifowie7r1" data-title="" class="article-share-link">Share</a>
+      <a data-url="http://example.com/2021/08/21/%E7%B4%A2%E5%BC%95%E4%B8%8E%E7%AE%97%E6%B3%95/" data-id="cksg75lc300009m6ifowie7r1" data-title="并发机制底层" class="article-share-link">Share</a>
       
       
       
@@ -706,7 +1042,7 @@
       <ul>
         
           <li>
-            <a href="/2021/08/17/%E7%B4%A2%E5%BC%95%E4%B8%8E%E7%AE%97%E6%B3%95/">(no title)</a>
+            <a href="/2021/08/21/%E7%B4%A2%E5%BC%95%E4%B8%8E%E7%AE%97%E6%B3%95/">并发机制底层</a>
           </li>
         
           <li>
